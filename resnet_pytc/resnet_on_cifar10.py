@@ -1,11 +1,8 @@
 import argparse
 from tqdm import tqdm
-
 import torch
 import torch.nn.functional as F
-
 from torchvision import models, datasets, transforms
-
 
 def get_CIFAR10(root="./"):
     input_size = 32
@@ -107,51 +104,43 @@ def test(model, test_loader):
     return loss, percentage_correct
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--epochs", type=int, default=50, help="number of epochs to train (default: 50)"
-    )
-    parser.add_argument(
-        "--lr", type=float, default=0.05, help="learning rate (default: 0.05)"
-    )
-    parser.add_argument("--seed", type=int, default=1, help="random seed (default: 1)")
-    args = parser.parse_args()
-    print(args)
-
-    torch.manual_seed(args.seed)
-
-    input_size, num_classes, train_dataset, test_dataset = get_CIFAR10()
-
-    kwargs = {"num_workers": 2, "pin_memory": True}
-
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=128, shuffle=True, **kwargs
-    )
-    test_loader = torch.utils.data.DataLoader(
-        test_dataset, batch_size=5000, shuffle=False, **kwargs
-    )
-
-    model = Model()
-    # model = model.cuda()
-
-    milestones = [25, 40]
-
-    optimizer = torch.optim.SGD(
-        model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4
-    )
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(
-        optimizer, milestones=milestones, gamma=0.1
-    )
-
-    for epoch in range(1, args.epochs + 1):
-        train(model, train_loader, optimizer, epoch)
-        test(model, test_loader)
-        
-        scheduler.step()
-
-    torch.save(model.state_dict(), "cifar_model.pt")
 
 
-if __name__ == "__main__":
-    main()
+# params
+seed = 47
+num_epochs = 10
+lr = 0.01
+
+# Set seed
+torch.manual_seed(seed)
+
+input_size, num_classes, train_dataset, test_dataset = get_CIFAR10()
+
+kwargs = {"num_workers": 4, "pin_memory": True}
+
+train_loader = torch.utils.data.DataLoader(
+    train_dataset, batch_size=128, shuffle=True, **kwargs
+)
+test_loader = torch.utils.data.DataLoader(
+    test_dataset, batch_size=5000, shuffle=False, **kwargs
+)
+
+model = Model()
+# model = model.cuda()
+
+milestones = [25, 40]
+
+optimizer = torch.optim.SGD(
+    model.parameters(), lr=lr, momentum=0.9, weight_decay=5e-4
+)
+scheduler = torch.optim.lr_scheduler.MultiStepLR(
+    optimizer, milestones=milestones, gamma=0.1
+)
+
+for epoch in range(1, num_epochs + 1):
+    train(model, train_loader, optimizer, epoch)
+    test(model, test_loader)
+
+    scheduler.step()
+
+#torch.save(model.state_dict(), "cifar_model.pt")
